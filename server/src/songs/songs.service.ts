@@ -39,9 +39,7 @@ export class SongsService {
 
   // Update an existing song by ID
   async update(id: string, updateData: UpdateSongDto): Promise<UpdateResult> {
-    const song = await this.findOne(id);
-    Object.assign(song, updateData);
-    return this.songRepository.save(song);
+    return this.songRepository.update(id, updateData);
   }
 
   // Delete a song by ID
