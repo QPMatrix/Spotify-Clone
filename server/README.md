@@ -1,35 +1,87 @@
 <h1>📄 API Documentation</h1>
 
 <h3>Overview</h3>
-<p>In this branch, I've used the NestJS CLI to generate the <code>songs</code> module for the Spotify Clone backend. This module is crucial for managing the songs within the application, including their creation, retrieval, updating, and deletion.</p>
+<p>In this branch, I've implemented validation middleware for the <code>songs</code> module in the Spotify Clone backend. This setup ensures that incoming requests are properly validated before being processed.</p>
 
-<h3>Creating the Songs Module</h3>
-<p>The following command was used to generate the <code>songs</code> module:</p>
+<h3>Setting Up Validation Middleware</h3>
+<p>The following packages were installed to enable validation:</p>
 
-<pre><code>nest g module songs</code></pre>
+<pre><code>pnpm add class-validator class-transformer</code></pre>
 
-<p>This command created the <code>songs</code> module with all necessary files and structure.</p>
+<p>After installing these packages, a global validation pipe was added to the <code>main.ts</code> file:</p>
 
-<h3>Creating the Songs Controller</h3>
-<p>The following command was used to generate the <code>songs</code> controller:</p>
+<pre><code>import { ValidationPipe } from '@nestjs/common';
 
-<pre><code>nest g controller songs</code></pre>
+app.useGlobalPipes(new ValidationPipe());</code></pre>
 
-<p>This command created the <code>songs</code> controller, which will handle all incoming requests related to song operations.</p>
+<p>This line ensures that all incoming requests are validated according to the DTOs defined in the application.</p>
 
-<h3>Creating the Songs Service</h3>
-<p>The following command was used to generate the <code>songs</code> service:</p>
+<h3>Creating the DTO for Songs</h3>
+<p>A <code>dto</code> folder was created in the <code>songs</code> module to hold the data transfer objects (DTOs). The <code>CreateSongDto</code> was defined to validate the data required to create a new song:</p>
 
-<pre><code>nest g service songs</code></pre>
+<pre><code>import {
+  IsArray,
+  IsDateString,
+  IsMilitaryTime,
+  IsNotEmpty,
+  IsString,
+} from 'class-validator';
 
-<p>This command created the <code>songs</code> service, which will contain the business logic for managing songs in the system.</p>
+export class CreateSongDto {
+  @IsString()
+  @IsNotEmpty()
+  readonly title: string;
 
-<h3>Songs Module Overview</h3>
+  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  readonly artist: string[];
+
+  @IsNotEmpty()
+  @IsDateString()
+  readonly releaseDate: Date;
+
+  @IsMilitaryTime()
+  @IsNotEmpty()
+  readonly duration: Date;
+}</code></pre>
+
+<p>This DTO enforces the following validation rules:</p>
 <ul>
-  <li><code>songs</code> Module: Manages all song-related operations, including creating, updating, retrieving, and deleting songs in the system.</li>
-  <li><code>songs</code> Controller: Handles incoming HTTP requests for song-related operations and routes them to the appropriate service methods.</li>
-  <li><code>songs</code> Service: Contains the core business logic for processing song-related data and interacting with the database.</li>
+  <li><code>title</code>: Must be a non-empty string.</li>
+  <li><code>artist</code>: Must be a non-empty array of strings.</li>
+  <li><code>releaseDate</code>: Must be a valid date string.</li>
+  <li><code>duration</code>: Must be in military time format (HH:mm).</li>
 </ul>
 
+<h3>Using the DTO in the Songs Controller</h3>
+<p>The <code>CreateSongDto</code> is used in the <code>songs</code> controller to validate incoming requests for creating new songs:</p>
+
+<pre><code>import { Controller, Post, Body } from '@nestjs/common';
+import { SongsService } from './songs.service';
+import { CreateSongDto } from './dto/create-song.dto';
+
+@Controller('songs')
+export class SongsController {
+  constructor(private readonly songsService: SongsService) {}
+
+  @Post()
+  create(@Body() song: CreateSongDto) {
+    return this.songsService.create(song);
+  }
+}</code></pre>
+
+<h3>Testing the Validation</h3>
+<p>To test the validation, use a tool like Postman or curl to send requests with the required data. For example:</p>
+
+<pre><code>{
+  "title": "Song Title",
+  "artist": ["Artist 1", "Artist 2"],
+  "releaseDate": "2024-08-23",
+  "duration": "03:45"
+}</code></pre>
+
+<p>If the data is valid, the song will be created. If any validation fails, a <code>400 Bad Request</code> response will be returned with details about the validation errors.</p>
+
 <h3>Next Steps</h3>
-<p>With the <code>songs</code> module, controller, and service in place, the next steps will involve implementing the business logic, setting up routes, and integrating this module with other parts of the backend system.</p>
+<p>With the validation middleware and DTOs in place, the next steps will involve refining the business logic, integrating additional features, and ensuring that all incoming requests are properly validated before being processed by the backend.</p>
