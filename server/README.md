@@ -1,87 +1,98 @@
 <h1>📄 API Documentation</h1>
 
 <h3>Overview</h3>
-<p>In this branch, I've implemented validation middleware for the <code>songs</code> module in the Spotify Clone backend. This setup ensures that incoming requests are properly validated before being processed.</p>
+<p>In this branch, I've implemented a custom logger middleware for the Spotify Clone backend using NestJS. This middleware logs each incoming request with a timestamp, helping to monitor and debug the application effectively.</p>
 
-<h3>Setting Up Validation Middleware</h3>
-<p>The following packages were installed to enable validation:</p>
+<h3>Creating the Logger Middleware</h3>
+<p>To generate the logger middleware, the following command was used:</p>
 
-<pre><code>pnpm add class-validator class-transformer</code></pre>
+<pre><code>nest g mi common/middleware/logger --no-spec --no-flat</code></pre>
 
-<p>After installing these packages, a global validation pipe was added to the <code>main.ts</code> file:</p>
+<p>This command creates the <code>LoggerMiddleware</code> in the <code>common/middleware/logger</code> directory, with the necessary structure.</p>
 
-<pre><code>import { ValidationPipe } from '@nestjs/common';
+<h3>Implementing the Logger Middleware</h3>
+<p>The <code>LoggerMiddleware</code> was implemented to log the incoming requests. The code is as follows:</p>
 
-app.useGlobalPipes(new ValidationPipe());</code></pre>
+<pre><code>import { Injectable, NestMiddleware } from '@nestjs/common';
 
-<p>This line ensures that all incoming requests are validated according to the DTOs defined in the application.</p>
-
-<h3>Creating the DTO for Songs</h3>
-<p>A <code>dto</code> folder was created in the <code>songs</code> module to hold the data transfer objects (DTOs). The <code>CreateSongDto</code> was defined to validate the data required to create a new song:</p>
-
-<pre><code>import {
-  IsArray,
-  IsDateString,
-  IsMilitaryTime,
-  IsNotEmpty,
-  IsString,
-} from 'class-validator';
-
-export class CreateSongDto {
-  @IsString()
-  @IsNotEmpty()
-  readonly title: string;
-
-  @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  readonly artist: string[];
-
-  @IsNotEmpty()
-  @IsDateString()
-  readonly releaseDate: Date;
-
-  @IsMilitaryTime()
-  @IsNotEmpty()
-  readonly duration: Date;
-}</code></pre>
-
-<p>This DTO enforces the following validation rules:</p>
-<ul>
-  <li><code>title</code>: Must be a non-empty string.</li>
-  <li><code>artist</code>: Must be a non-empty array of strings.</li>
-  <li><code>releaseDate</code>: Must be a valid date string.</li>
-  <li><code>duration</code>: Must be in military time format (HH:mm).</li>
-</ul>
-
-<h3>Using the DTO in the Songs Controller</h3>
-<p>The <code>CreateSongDto</code> is used in the <code>songs</code> controller to validate incoming requests for creating new songs:</p>
-
-<pre><code>import { Controller, Post, Body } from '@nestjs/common';
-import { SongsService } from './songs.service';
-import { CreateSongDto } from './dto/create-song.dto';
-
-@Controller('songs')
-export class SongsController {
-  constructor(private readonly songsService: SongsService) {}
-
-  @Post()
-  create(@Body() song: CreateSongDto) {
-    return this.songsService.create(song);
+@Injectable()
+export class LoggerMiddleware implements NestMiddleware {
+  use(req: any, res: any, next: () => void) {
+    console.log('Request...', new Date().toDateString());
+    next();
   }
 }</code></pre>
 
-<h3>Testing the Validation</h3>
-<p>To test the validation, use a tool like Postman or curl to send requests with the required data. For example:</p>
+<p>This middleware logs the request details and the current date whenever a request is received.</p>
 
-<pre><code>{
-  "title": "Song Title",
-  "artist": ["Artist 1", "Artist 2"],
-  "releaseDate": "2024-08-23",
-  "duration": "03:45"
+<h3>Applying the Middleware in the App Module</h3>
+<p>The middleware was applied to the <code>SongsModule</code> in the <code>AppModule</code>. Here are the different options for applying the middleware:</p>
+
+<h4>Option 1: Applying to All Routes in the Songs Module</h4>
+<p>The middleware can be applied to all routes in the <code>SongsModule</code> as follows:</p>
+
+<pre><code>import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { SongsModule } from './songs/songs.module';
+import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
+
+@Module({
+  imports: [SongsModule],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('songs');
+  }
 }</code></pre>
 
-<p>If the data is valid, the song will be created. If any validation fails, a <code>400 Bad Request</code> response will be returned with details about the validation errors.</p>
+<h4>Option 2: Applying to a Specific Route and Method</h4>
+<p>The middleware can be applied to a specific route and method (e.g., POST requests to <code>/songs</code>):</p>
+
+<pre><code>import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { SongsModule } from './songs/songs.module';
+import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
+
+@Module({
+  imports: [SongsModule],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes({ path: 'songs', method: RequestMethod.POST });
+  }
+}</code></pre>
+
+<h4>Option 3: Applying to a Specific Controller</h4>
+<p>The middleware can also be applied to all routes handled by a specific controller:</p>
+
+<pre><code>import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { SongsModule } from './songs/songs.module';
+import { SongsController } from './songs/songs.controller';
+import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
+
+@Module({
+  imports: [SongsModule],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes(SongsController);
+  }
+}</code></pre>
+
+<h3>Testing the Logger Middleware</h3>
+<p>Once the middleware is applied, you can test it by sending requests to the relevant routes. The middleware will log the request and the current date to the console, allowing you to verify that it is functioning correctly.</p>
 
 <h3>Next Steps</h3>
-<p>With the validation middleware and DTOs in place, the next steps will involve refining the business logic, integrating additional features, and ensuring that all incoming requests are properly validated before being processed by the backend.</p>
+<p>With the <code>LoggerMiddleware</code> in place, you can now monitor and log requests effectively. Further customizations can be made to the middleware to log additional details or integrate with external logging services.</p>
