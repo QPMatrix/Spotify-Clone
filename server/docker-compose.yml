@@ -1,0 +1,17 @@
+services:
+  db:
+    image: mysql:latest
+    container_name: spotify_clone_mysqldb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: spotify_clone
+    ports:
+        - "3306:3306"
+    restart: unless-stopped
+    networks:
+        - spotify_clone_network
+networks:
+  spotify_clone_network:
+    driver: bridge
+volumes:
+    mysql_data:
