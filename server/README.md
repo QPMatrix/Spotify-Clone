@@ -1,98 +1,90 @@
 <h1>📄 API Documentation</h1>
 
 <h3>Overview</h3>
-<p>In this branch, I've implemented a custom logger middleware for the Spotify Clone backend using NestJS. This middleware logs each incoming request with a timestamp, helping to monitor and debug the application effectively.</p>
+<p>This branch introduces scoped controllers and services in the Spotify Clone backend. Specifically, the <code>SongsController</code> is request-scoped, and the <code>SongsService</code> is transient. This setup ensures that each request is handled with isolated controller instances, while each service instance is unique whenever it is used within a request.</p>
 
-<h3>Creating the Logger Middleware</h3>
-<p>To generate the logger middleware, the following command was used:</p>
+<h3>Songs Controller</h3>
+<p>The <code>SongsController</code> is responsible for handling all HTTP requests related to songs. It is scoped to the request level, meaning a new instance of the controller is created for each incoming request. This allows for request-specific state to be maintained within the controller.</p>
 
-<pre><code>nest g mi common/middleware/logger --no-spec --no-flat</code></pre>
+<pre><code>import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Put,
+  Scope,
+} from '@nestjs/common';
+import { SongsService } from './songs.service';
+import { CreateSongDto } from './dto/create-song.dto';
 
-<p>This command creates the <code>LoggerMiddleware</code> in the <code>common/middleware/logger</code> directory, with the necessary structure.</p>
-
-<h3>Implementing the Logger Middleware</h3>
-<p>The <code>LoggerMiddleware</code> was implemented to log the incoming requests. The code is as follows:</p>
-
-<pre><code>import { Injectable, NestMiddleware } from '@nestjs/common';
-
-@Injectable()
-export class LoggerMiddleware implements NestMiddleware {
-  use(req: any, res: any, next: () => void) {
-    console.log('Request...', new Date().toDateString());
-    next();
-  }
-}</code></pre>
-
-<p>This middleware logs the request details and the current date whenever a request is received.</p>
-
-<h3>Applying the Middleware in the App Module</h3>
-<p>The middleware was applied to the <code>SongsModule</code> in the <code>AppModule</code>. Here are the different options for applying the middleware:</p>
-
-<h4>Option 1: Applying to All Routes in the Songs Module</h4>
-<p>The middleware can be applied to all routes in the <code>SongsModule</code> as follows:</p>
-
-<pre><code>import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { SongsModule } from './songs/songs.module';
-import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
-
-@Module({
-  imports: [SongsModule],
-  controllers: [AppController],
-  providers: [AppService],
+@Controller({
+  path: 'songs',
+  scope: Scope.REQUEST,
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('songs');
+export class SongsController {
+  constructor(private songsService: SongsService) {}
+
+  @Post()
+  create(@Body() song: CreateSongDto) {
+    return this.songsService.create(song);
+  }
+
+  @Get()
+  findAll() {
+    return this.songsService.findAll();
+  }
+
+  @Get(':id')
+  findOne() {
+    return 'This action returns a song with id';
+  }
+
+  @Put(':id')
+  update() {
+    return 'This action updates a song with id';
+  }
+
+  @Delete(':id')
+  delete() {
+    return 'This action deletes a song with id';
   }
 }</code></pre>
 
-<h4>Option 2: Applying to a Specific Route and Method</h4>
-<p>The middleware can be applied to a specific route and method (e.g., POST requests to <code>/songs</code>):</p>
+<h3>Songs Service</h3>
+<p>The <code>SongsService</code> is responsible for the business logic related to songs. It is transient-scoped, meaning a new instance of the service is created every time it is injected. This ensures that the service does not maintain any shared state across different uses within the same request or across requests.</p>
 
-<pre><code>import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { SongsModule } from './songs/songs.module';
-import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
+<pre><code>import { Injectable, Scope } from '@nestjs/common';
 
-@Module({
-  imports: [SongsModule],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(LoggerMiddleware)
-      .forRoutes({ path: 'songs', method: RequestMethod.POST });
+@Injectable({ scope: Scope.TRANSIENT })
+export class SongsService {
+  private readonly songs = [];
+
+  create(song) {
+    this.songs.push(song);
+    return this.songs;
+  }
+
+  findAll() {
+    return this.songs;
   }
 }</code></pre>
 
-<h4>Option 3: Applying to a Specific Controller</h4>
-<p>The middleware can also be applied to all routes handled by a specific controller:</p>
+<h3>Explanation of Scopes</h3>
+<ul>
+  <li><strong>Request Scope (Controller):</strong> A new instance of the <code>SongsController</code> is created for every incoming request. This means that each request is handled by its own isolated controller instance, preventing any potential cross-request state issues.</li>
+  <li><strong>Transient Scope (Service):</strong> The <code>SongsService</code> is created afresh each time it is injected. This ensures that no state is shared unintentionally, allowing for highly independent operations within the service.</li>
+</ul>
 
-<pre><code>import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { SongsModule } from './songs/songs.module';
-import { SongsController } from './songs/songs.controller';
-import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
-
-@Module({
-  imports: [SongsModule],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes(SongsController);
-  }
-}</code></pre>
-
-<h3>Testing the Logger Middleware</h3>
-<p>Once the middleware is applied, you can test it by sending requests to the relevant routes. The middleware will log the request and the current date to the console, allowing you to verify that it is functioning correctly.</p>
+<h3>Endpoints Summary</h3>
+<p>The following endpoints are managed by the <code>SongsController</code>:</p>
+<ul>
+  <li><code>POST /songs</code> - Create a new song</li>
+  <li><code>GET /songs</code> - Retrieve all songs</li>
+  <li><code>GET /songs/:id</code> - Retrieve a specific song by ID (placeholder implementation)</li>
+  <li><code>PUT /songs/:id</code> - Update a specific song by ID (placeholder implementation)</li>
+  <li><code>DELETE /songs/:id</code> - Delete a specific song by ID (placeholder implementation)</li>
+</ul>
 
 <h3>Next Steps</h3>
-<p>With the <code>LoggerMiddleware</code> in place, you can now monitor and log requests effectively. Further customizations can be made to the middleware to log additional details or integrate with external logging services.</p>
+<p>With the scoped controller and service in place, the next steps will involve implementing the full logic for the <code>findOne</code>, <code>update</code>, and <code>delete</code> methods, as well as integrating additional features as needed.</p>
