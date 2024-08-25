@@ -1,154 +1,144 @@
 <h1>📄 API Documentation</h1>
 
 <h3>Overview</h3>
-<p>This branch introduces the implementation of relationships between the <code>Song</code> and <code>Artist</code> entities in the Spotify Clone backend using TypeORM. Additionally, it covers how to manage these relationships within the DTOs used for updating records.</p>
+<p>This branch introduces JWT-based authentication in the Spotify Clone backend. The implementation includes the setup of the <code>AuthModule</code>, a JWT strategy, and guards to protect routes, ensuring that only authenticated users can access certain parts of the application. Additionally, a specialized guard is provided for artists, ensuring role-based access control.</p>
 
-<h3>Entity Relationships</h3>
-<p>Entity relationships are a crucial aspect of database design, allowing us to define how different entities like <code>Songs</code> and <code>Artists</code> are connected. The following steps outline how these relationships were implemented and managed:</p>
+<h3>Authentication Setup</h3>
+<p>The authentication system is built using <code>@nestjs/passport</code> and <code>jsonwebtoken</code>. The following steps outline how JWT authentication was implemented:</p>
 
-<h3>1. Defining Many-to-Many Relationship (Songs & Artists)</h3>
-<p>The <code>Song</code> and <code>Artist</code> entities have a many-to-many relationship, meaning each song can have multiple artists, and each artist can contribute to multiple songs. This relationship is defined as follows:</p>
+<h3>1. Setting Up the Auth Module</h3>
+<p>The <code>AuthModule</code> is responsible for managing authentication in the application. It imports the necessary modules, including the <code>UserModule</code> and <code>ArtistsModule</code>, and registers the JWT module:</p>
 
-<pre><code>import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { Artist } from './artist.entity';
+<pre><code>import { Module } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { UserModule } from '../user/user.module';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { ArtistsModule } from '../artists/artists.module';
 
-@Entity('songs')
-export class Song {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+@Module({
+  imports: [
+    UserModule,
+    ArtistsModule,
+    JwtModule.register({ secret: 'secret', signOptions: { expiresIn: '1d' } }),
+  ],
+  providers: [AuthService, JwtStrategy],
+  controllers: [AuthController],
+  exports: [AuthService],
+})
+export class AuthModule {}
+</code></pre>
 
-  @Column()
-  title: string;
-
-  @ManyToMany((): typeof Artist => Artist, (artist) => artist.songs, {
-    cascade: true,
-  })
-  @JoinTable({ name: 'songs_artists' })
-  artists: Artist[];
-
-  @Column('date')
-  releaseDate: Date;
-
-  @Column('time')
-  duration: Date;
-
-  @Column('text', { nullable: true })
-  lyrics: string;
-}</code></pre>
-
-<p>In the above <code>Song</code> entity:</p>
+<p>In this module:</p>
 <ul>
-  <li>The <code>@ManyToMany</code> decorator establishes the many-to-many relationship with the <code>Artist</code> entity.</li>
-  <li>The <code>@JoinTable</code> decorator specifies the name of the join table that manages the relationship between songs and artists.</li>
-  <li>The <code>cascade: true</code> option allows related entities (artists) to be automatically saved when a song is saved.</li>
+  <li>The <code>JwtModule</code> is configured with a secret key and an expiration time of one day for the tokens.</li>
+  <li>The <code>AuthService</code> is provided, and the <code>JwtStrategy</code> is used to validate incoming JWTs.</li>
+  <li>The module exports the <code>AuthService</code> for use in other parts of the application.</li>
 </ul>
 
-<h3>2. Defining One-to-One and Many-to-Many Relationship (Artists & Users)</h3>
-<p>The <code>Artist</code> entity has a one-to-one relationship with a <code>User</code> entity and a many-to-many relationship with the <code>Song</code> entity:</p>
-
-<pre><code>import {
-  Entity,
-  JoinColumn,
-  ManyToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { User } from './user.entity';
-import { Song } from './songs.entity';
-
-@Entity('artists')
-export class Artist {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @OneToOne((): typeof User => User)
-  @JoinColumn()
-  user: User;
-
-  @ManyToMany((): typeof Song => Song, (song) => song.artists)
-  songs: Song[];
-}</code></pre>
-
-<p>In the above <code>Artist</code> entity:</p>
-<ul>
-  <li>The <code>@OneToOne</code> decorator establishes a one-to-one relationship with the <code>User</code> entity.</li>
-  <li>The <code>@JoinColumn</code> decorator indicates that this entity owns the relationship (i.e., it contains the foreign key).</li>
-  <li>The <code>@ManyToMany</code> decorator is used to link the artist with multiple songs.</li>
-</ul>
-
-<h3>3. Updating the DTO to Handle Relationships</h3>
-<p>To manage these relationships effectively, the <code>UpdateSongDto</code> was updated to include the <code>Artist</code> entity. This allows for the association of artists with songs during the update process:</p>
-
-<pre><code>import {
-  IsArray,
-  IsDateString,
-  IsMilitaryTime,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { Artist } from '../../entities/artist.entity';
-
-export class UpdateSongDto {
-  @IsString()
-  @IsOptional()
-  readonly title?: string;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => Artist)
-  @IsOptional()
-  readonly artists?: Artist[];
-
-  @IsDateString()
-  @IsOptional()
-  readonly releaseDate?: Date;
-
-  @IsMilitaryTime()
-  @IsOptional()
-  readonly duration?: Date;
-
-  @IsString()
-  @IsOptional()
-  readonly lyrics?: string;
-}</code></pre>
-
-<p>Key points about the DTO update:</p>
-<ul>
-  <li>The <code>artists</code> field is an array of <code>Artist</code> entities, allowing multiple artists to be associated with a song.</li>
-  <li><code>ValidateNested</code> and <code>Type(() => Artist)</code> are used to ensure that each element in the <code>artists</code> array is a valid <code>Artist</code> entity.</li>
-  <li>All fields in the DTO are optional, supporting partial updates to the song's data.</li>
-</ul>
-
-<h3>4. Integrating the Relationships in Services and Controllers</h3>
-<p>To fully leverage these relationships, the services and controllers must be updated to handle the related data appropriately. For instance, when creating or updating a song, the related artists must be managed:</p>
+<h3>2. Implementing JWT Strategy</h3>
+<p>The <code>JwtStrategy</code> handles the validation of JWTs. It extracts the JWT from the authorization header and validates it using the secret key:</p>
 
 <pre><code>import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Song } from '../../entities/songs.entity';
-import { UpdateSongDto } from './dto/update-song.dto';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PayloadType } from '../../types/Payload';
 
 @Injectable()
-export class SongsService {
-  constructor(
-    @InjectRepository(Song)
-    private songRepository: Repository<Song>,
-  ) {}
-
-  async update(id: string, updateData: UpdateSongDto): Promise<Song> {
-    const song = await this.songRepository.findOne(id, { relations: ['artists'] });
-    Object.assign(song, updateData);
-    return this.songRepository.save(song);
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor() {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: 'secret',
+    });
   }
-}</code></pre>
+  async validate(payload: PayloadType) {
+    return {
+      userId: payload.email,
+      email: payload.email,
+      artistId: payload.artistId,
+    };
+  }
+}
+</code></pre>
+
+<p>In this strategy:</p>
+<ul>
+  <li><code>ExtractJwt.fromAuthHeaderAsBearerToken()</code> is used to extract the JWT from the request header.</li>
+  <li>The <code>validate</code> method returns an object containing user-specific details like <code>userId</code>, <code>email</code>, and <code>artistId</code>, which can be accessed in the request context.</li>
+</ul>
+
+<h3>3. Protecting Routes with Guards</h3>
+<p>The authentication system uses guards to protect routes. Two types of guards are implemented: <code>JwtAuthGuard</code> for general JWT-based protection and <code>ArtistsJwtGuard</code> for artist-specific protection:</p>
+
+<h4>3.1 JwtAuthGuard</h4>
+<pre><code>import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {}
+</code></pre>
+
+<h4>3.2 ArtistsJwtGuard</h4>
+<p>The <code>ArtistsJwtGuard</code> extends the <code>JwtAuthGuard</code> to enforce artist-specific access:</p>
+
+<pre><code>import { AuthGuard } from '@nestjs/passport';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class ArtistsJwtGuard extends AuthGuard('jwt') implements CanActivate {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    return super.canActivate(context);
+  }
+  handleRequest<TUser = any>(err: any, user: any): TUser {
+    if (err || !user) {
+      throw err || new UnauthorizedException();
+    }
+    if (user.artistId) {
+      return user;
+    }
+    throw err || new UnauthorizedException();
+  }
+}
+</code></pre>
+
+<p>In this guard:</p>
+<ul>
+  <li>The <code>handleRequest</code> method checks if the authenticated user has an <code>artistId</code> and throws an exception if not.</li>
+</ul>
+
+<h3>4. Applying the Guards to Routes</h3>
+<p>The guards can be applied to routes to ensure that only authenticated users can access them:</p>
+
+<pre><code>import { Controller, Get, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { ArtistsJwtGuard } from './auth/artists-jwt.guard';
+
+@Controller('songs')
+export class SongsController {
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  findAll() {
+    return this.songsService.findAll();
+  }
+
+  @Get('artist')
+  @UseGuards(ArtistsJwtGuard)
+  findArtistData() {
+    return 'This route is protected and only accessible by artists';
+  }
+}
+</code></pre>
 
 <h3>Next Steps</h3>
-<p>With these relationships and DTO updates in place, the next steps involve further refining the business logic to ensure data integrity and efficient querying. Additional entities like <code>Album</code> can be integrated in a similar manner, expanding the relationships and data management capabilities of the backend.</p>
+<p>With JWT authentication and role-based guards implemented, the next steps involve expanding the role-based access control, refining the business logic, and ensuring that tokens are securely managed and refreshed as needed.</p>
