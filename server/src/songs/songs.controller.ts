@@ -12,12 +12,15 @@ import {
   Put,
   Query,
   Scope,
+  UseGuards,
 } from '@nestjs/common';
 import { SongsService } from './songs.service';
 import { CreateSongDto } from '../dto/song/create-song.dto';
 import { UpdateSongDto } from '../dto/song/update-song.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Song } from '../entities/songs.entity';
+import { ArtistsJwtGuard } from '../auth/guards/artists-jwt.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller({
   path: 'songs',
@@ -28,6 +31,7 @@ export class SongsController {
 
   // Create a new song
   @Post()
+  @UseGuards(ArtistsJwtGuard)
   async create(@Body() songData: CreateSongDto) {
     try {
       const song = await this.songsService.create(songData);
@@ -46,6 +50,7 @@ export class SongsController {
 
   // Retrieve all songs
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
@@ -57,7 +62,9 @@ export class SongsController {
   }
 
   // Retrieve a single song by ID
+
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id') id: string) {
     try {
       return await this.songsService.findOne(id);
@@ -72,6 +79,7 @@ export class SongsController {
 
   // Update an existing song by ID
   @Put(':id')
+  @UseGuards(ArtistsJwtGuard)
   async update(@Param('id') id: string, @Body() updateData: UpdateSongDto) {
     try {
       const updatedSong = await this.songsService.update(id, updateData);
@@ -90,6 +98,7 @@ export class SongsController {
 
   // Delete a song by ID
   @Delete(':id')
+  @UseGuards(ArtistsJwtGuard)
   async delete(@Param('id') id: string) {
     try {
       await this.songsService.delete(id);
