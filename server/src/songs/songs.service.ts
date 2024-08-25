@@ -1,20 +1,23 @@
-import { Injectable, Scope, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { Repository, UpdateResult } from 'typeorm';
 import { Song } from '../entities/songs.entity';
-import { CreateSongDto } from './dto/create-song.dto';
+import { CreateSongDto } from '../dto/song/create-song.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UpdateSongDto } from './dto/update-song.dto';
+import { UpdateSongDto } from '../dto/song/update-song.dto';
 import {
   IPaginationOptions,
-  Pagination,
   paginate,
+  Pagination,
 } from 'nestjs-typeorm-paginate';
+import { Artist } from '../entities/artist.entity';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class SongsService {
   constructor(
     @InjectRepository(Song)
     private songRepository: Repository<Song>,
+    @InjectRepository(Artist)
+    private artistRepository: Repository<Artist>,
   ) {}
 
   // Create a new song
@@ -25,6 +28,7 @@ export class SongsService {
     song.releaseDate = songData.releaseDate;
     song.duration = songData.duration;
     song.lyrics = songData.lyrics;
+    song.artists = await this.artistRepository.findByIds(songData.artist);
     return await this.songRepository.save(song);
   }
 

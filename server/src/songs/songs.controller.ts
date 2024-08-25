@@ -14,8 +14,8 @@ import {
   Scope,
 } from '@nestjs/common';
 import { SongsService } from './songs.service';
-import { CreateSongDto } from './dto/create-song.dto';
-import { UpdateSongDto } from './dto/update-song.dto';
+import { CreateSongDto } from '../dto/song/create-song.dto';
+import { UpdateSongDto } from '../dto/song/update-song.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Song } from '../entities/songs.entity';
 
