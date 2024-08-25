@@ -14,4 +14,8 @@ export class User {
   @Column()
   @Exclude()
   password: string;
+  @Column({ nullable: true, type: 'text' })
+  twoFactorAuthSecret: string;
+  @Column({ default: false, type: 'boolean' })
+  enabledTwoFactorAuth: boolean;
 }

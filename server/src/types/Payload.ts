@@ -3,3 +3,6 @@ export interface PayloadType {
   userId: string;
   artistId?: string;
 }
+export type EnableTwoFactorAuthPayload = {
+  secret: string;
+};

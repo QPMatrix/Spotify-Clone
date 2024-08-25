@@ -1,144 +1,204 @@
 <h1>📄 API Documentation</h1>
 
 <h3>Overview</h3>
-<p>This branch introduces JWT-based authentication in the Spotify Clone backend. The implementation includes the setup of the <code>AuthModule</code>, a JWT strategy, and guards to protect routes, ensuring that only authenticated users can access certain parts of the application. Additionally, a specialized guard is provided for artists, ensuring role-based access control.</p>
+<p>This branch introduces the implementation of two-factor authentication (2FA) in the Spotify Clone backend using the <code>speakeasy</code> library. The 2FA feature enhances security by requiring users to provide a second form of authentication in addition to their password. This section covers how 2FA was integrated into the authentication system, including the updates to the user entity, service methods, and authentication logic.</p>
 
-<h3>Authentication Setup</h3>
-<p>The authentication system is built using <code>@nestjs/passport</code> and <code>jsonwebtoken</code>. The following steps outline how JWT authentication was implemented:</p>
+<h3>1. Installing the <code>speakeasy</code> Library</h3>
+<p>The <code>speakeasy</code> library was added to the project to manage the generation and verification of time-based one-time passwords (TOTPs) for 2FA:</p>
 
-<h3>1. Setting Up the Auth Module</h3>
-<p>The <code>AuthModule</code> is responsible for managing authentication in the application. It imports the necessary modules, including the <code>UserModule</code> and <code>ArtistsModule</code>, and registers the JWT module:</p>
+<pre><code>pnpm add speakeasy</code></pre>
 
-<pre><code>import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { UserModule } from '../user/user.module';
-import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { ArtistsModule } from '../artists/artists.module';
+<p>This library provides easy-to-use functions for generating and verifying 2FA tokens.</p>
 
-@Module({
-  imports: [
-    UserModule,
-    ArtistsModule,
-    JwtModule.register({ secret: 'secret', signOptions: { expiresIn: '1d' } }),
-  ],
-  providers: [AuthService, JwtStrategy],
-  controllers: [AuthController],
-  exports: [AuthService],
-})
-export class AuthModule {}
+<h3>2. Updating the User Entity</h3>
+<p>The <code>User</code> entity was updated to include fields for storing the 2FA secret and a boolean flag indicating whether 2FA is enabled:</p>
+
+<pre><code>import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity('users')
+export class User {
+  // Other fields...
+
+  @Column({ nullable: true, type: 'text' })
+  twoFactorAuthSecret: string;
+
+  @Column({ default: false, type: 'boolean' })
+  enabledTwoFactorAuth: boolean;
+}
 </code></pre>
 
-<p>In this module:</p>
+<p>In this entity:</p>
 <ul>
-  <li>The <code>JwtModule</code> is configured with a secret key and an expiration time of one day for the tokens.</li>
-  <li>The <code>AuthService</code> is provided, and the <code>JwtStrategy</code> is used to validate incoming JWTs.</li>
-  <li>The module exports the <code>AuthService</code> for use in other parts of the application.</li>
+  <li><code>twoFactorAuthSecret</code> stores the user's 2FA secret key, which is generated when 2FA is enabled.</li>
+  <li><code>enabledTwoFactorAuth</code> indicates whether 2FA is enabled for the user.</li>
 </ul>
 
-<h3>2. Implementing JWT Strategy</h3>
-<p>The <code>JwtStrategy</code> handles the validation of JWTs. It extracts the JWT from the authorization header and validates it using the secret key:</p>
+<h3>3. Adding Methods to the User Service</h3>
+<p>The <code>UserService</code> was updated with methods to manage the 2FA secret and toggle the 2FA state:</p>
 
 <pre><code>import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PayloadType } from '../../types/Payload';
+import { UpdateResult } from 'typeorm';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: 'secret',
+export class UserService {
+  // Other methods...
+
+  async updateTwoFactorAuthSecret(
+    id: string,
+    secret: string,
+  ): Promise<UpdateResult> {
+    return this.userRepository.update(id, {
+      twoFactorAuthSecret: secret,
+      enabledTwoFactorAuth: true,
     });
   }
-  async validate(payload: PayloadType) {
-    return {
-      userId: payload.email,
-      email: payload.email,
-      artistId: payload.artistId,
-    };
+
+  async disableTwoFactorAuthSecret(id: string): Promise<UpdateResult> {
+    return this.userRepository.update(id, {
+      twoFactorAuthSecret: null,
+      enabledTwoFactorAuth: false,
+    });
   }
 }
 </code></pre>
 
-<p>In this strategy:</p>
-<ul>
-  <li><code>ExtractJwt.fromAuthHeaderAsBearerToken()</code> is used to extract the JWT from the request header.</li>
-  <li>The <code>validate</code> method returns an object containing user-specific details like <code>userId</code>, <code>email</code>, and <code>artistId</code>, which can be accessed in the request context.</li>
-</ul>
+<p>These methods allow the application to enable or disable 2FA for a user by updating the relevant fields in the database.</p>
 
-<h3>3. Protecting Routes with Guards</h3>
-<p>The authentication system uses guards to protect routes. Two types of guards are implemented: <code>JwtAuthGuard</code> for general JWT-based protection and <code>ArtistsJwtGuard</code> for artist-specific protection:</p>
+<h3>4. Updating the Login Method</h3>
+<p>The <code>login</code> method in the <code>AuthService</code> was updated to handle the 2FA process:</p>
 
-<h4>3.1 JwtAuthGuard</h4>
-<pre><code>import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+<pre><code>import { Injectable, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
-</code></pre>
+export class AuthService {
+  // Other methods...
 
-<h4>3.2 ArtistsJwtGuard</h4>
-<p>The <code>ArtistsJwtGuard</code> extends the <code>JwtAuthGuard</code> to enforce artist-specific access:</p>
+  async login(
+    loginData: LoginDto,
+  ): Promise<{ accessToken: string } | { message: string }> {
+    const user = await this.userService.findOne(loginData);
+    const isMatchedPassword = await bcrypt.compare(
+      loginData.password,
+      user.password,
+    );
 
-<pre><code>import { AuthGuard } from '@nestjs/passport';
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
+    if (isMatchedPassword) {
+      delete user.password;
+      const payload: PayloadType = { email: user.email, userId: user.id };
+      const isArtist = await this.artistService.findArtistById(user.id);
 
-@Injectable()
-export class ArtistsJwtGuard extends AuthGuard('jwt') implements CanActivate {
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    return super.canActivate(context);
-  }
-  handleRequest<TUser = any>(err: any, user: any): TUser {
-    if (err || !user) {
-      throw err || new UnauthorizedException();
+      if (isArtist) {
+        payload.artistId = isArtist.id;
+      }
+
+      if (user.enabledTwoFactorAuth && user.twoFactorAuthSecret) {
+        return { message: 'Please submit the token' };
+      }
+
+      return { accessToken: this.jwtService.sign(payload) };
+    } else {
+      throw new UnauthorizedException('Invalid credentials');
     }
-    if (user.artistId) {
-      return user;
-    }
-    throw err || new UnauthorizedException();
   }
 }
 </code></pre>
 
-<p>In this guard:</p>
+<p>In this method:</p>
 <ul>
-  <li>The <code>handleRequest</code> method checks if the authenticated user has an <code>artistId</code> and throws an exception if not.</li>
+  <li>If 2FA is enabled for the user, a message is returned asking the user to submit the 2FA token.</li>
+  <li>If 2FA is not enabled, the JWT token is returned immediately after successful password validation.</li>
 </ul>
 
-<h3>4. Applying the Guards to Routes</h3>
-<p>The guards can be applied to routes to ensure that only authenticated users can access them:</p>
+<h3>5. Implementing 2FA Management Functions</h3>
+<p>Three additional functions were added to the <code>AuthService</code> to handle enabling, validating, and disabling 2FA:</p>
 
-<pre><code>import { Controller, Get, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { ArtistsJwtGuard } from './auth/artists-jwt.guard';
+<h4>5.1 Enabling 2FA</h4>
 
-@Controller('songs')
-export class SongsController {
-  @Get()
+<pre><code>import * as speakEasy from 'speakeasy';
+
+async enableTwoFactorAuth(
+  userId: string,
+): Promise<{ secret: string }> {
+  const user = await this.userService.findById(userId);
+
+  if (user.enabledTwoFactorAuth) {
+    return { secret: user.twoFactorAuthSecret };
+  }
+
+  user.twoFactorAuthSecret = speakEasy.generateSecret().base32;
+
+  await this.userService.updateTwoFactorAuthSecret(
+    user.id,
+    user.twoFactorAuthSecret,
+  );
+
+  return { secret: user.twoFactorAuthSecret };
+}
+</code></pre>
+
+<h4>5.2 Validating 2FA</h4>
+
+<pre><code>import * as speakEasy from 'speakeasy';
+
+async validateTwoFactorAuth(
+  userId: string,
+  data: ValidateTokenDto,
+): Promise<{ verified: boolean }> {
+  try {
+    const user = await this.userService.findById(userId);
+    const isValid = speakEasy.totp.verify({
+      secret: user.twoFactorAuthSecret,
+      encoding: 'base32',
+      token: data.token,
+    });
+
+    return { verified: isValid };
+  } catch (err) {
+    throw new UnauthorizedException('Invalid token', err);
+  }
+}
+</code></pre>
+
+<h4>5.3 Disabling 2FA</h4>
+
+<pre><code>async disableTwoFactorAuth(userId: string) {
+  return this.userService.disableTwoFactorAuthSecret(userId);
+}
+</code></pre>
+
+<h3>6. Updating the Auth Controller</h3>
+<p>The <code>AuthController</code> was updated to include routes for managing 2FA:</p>
+
+<pre><code>import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private authService: AuthService) {}
+
+  @Post('enable-two-factor-auth')
   @UseGuards(JwtAuthGuard)
-  findAll() {
-    return this.songsService.findAll();
+  enableTwoFactorAuth(@Req() req) {
+    return this.authService.enableTwoFactorAuth(req.user.userId);
   }
 
-  @Get('artist')
-  @UseGuards(ArtistsJwtGuard)
-  findArtistData() {
-    return 'This route is protected and only accessible by artists';
+  @Post('validate-two-factor-auth')
+  @UseGuards(JwtAuthGuard)
+  validateTwoFactorAuth(@Req() req, @Body() data: ValidateTokenDto) {
+    return this.authService.validateTwoFactorAuth(req.user.userId, data);
+  }
+
+  @Post('disable-two-factor-auth')
+  @UseGuards(JwtAuthGuard)
+  disableTwoFactorAuth(@Req() req) {
+    return this.authService.disableTwoFactorAuth(req.user.userId);
   }
 }
 </code></pre>
+
+<p>These routes allow users to enable, validate, and disable 2FA. The <code>JwtAuthGuard</code> is used to ensure that only authenticated users can access these endpoints.</p>
 
 <h3>Next Steps</h3>
-<p>With JWT authentication and role-based guards implemented, the next steps involve expanding the role-based access control, refining the business logic, and ensuring that tokens are securely managed and refreshed as needed.</p>
+<p>With 2FA integrated into the authentication process, the next steps involve testing the feature thoroughly, ensuring a smooth user experience, and considering the implementation of backup codes or other methods for account recovery in case users lose access to their 2FA device.</p>
