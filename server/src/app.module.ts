@@ -6,16 +6,12 @@ import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
 import { SongsController } from './songs/songs.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { Song } from './entities/songs.entity';
-import { Artist } from './entities/artist.entity';
-import { User } from './entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ArtistsModule } from './artists/artists.module';
 import { dataSourceOptions } from '../db/data-source';
 import { PlaylistModule } from './playlist/playlist.module';
 import { SeedModule } from './seed/seed.module';
-import { Playlist } from './entities/playlist.entity';
 
 @Module({
   imports: [
