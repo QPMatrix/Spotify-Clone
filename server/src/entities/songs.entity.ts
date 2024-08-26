@@ -3,9 +3,11 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Artist } from './artist.entity';
+import { Playlist } from './playlist.entity';
 
 @Entity('songs')
 export class Song {
@@ -29,4 +31,6 @@ export class Song {
 
   @Column('text', { nullable: true })
   lyrics: string;
+  @ManyToOne(() => Playlist, (playList) => playList.songs)
+  playlist: Playlist;
 }

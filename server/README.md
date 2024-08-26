@@ -1,159 +1,113 @@
-<h1>📄 API Documentation</h1>
+<h1>📄 Database Migrations and Seeding</h1>
 
-<h3>Overview</h3>
-<p>This branch introduces the implementation of API Key-based authentication in the Spotify Clone backend. The API Key authentication provides an additional method for clients to authenticate with the backend, offering flexibility alongside JWT-based authentication. This section covers how API Key authentication was integrated, including the updates to the user entity, service methods, and authentication logic.</p>
+<h3>1. Migrations</h3>
 
-<h3>1. Updating the User Entity</h3>
-<p>The <code>User</code> entity was updated to include a field for storing the API key:</p>
+<h4>1.1. Overview</h4>
+<p>Migrations are used to modify your database schema incrementally, keeping your database schema in sync with your codebase. This ensures that your database structure is versioned and consistent across different environments.</p>
 
-<pre><code>import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+<h4>1.2. Setting Up Migrations</h4>
+<p>In your <code>package.json</code>, the following scripts have been added to manage migrations:</p>
 
-@Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column()
-  email: string;
-
-  @Column({ nullable: true })
-  apiKey: string;
-
-  // Other fields...
-}
-</code></pre>
-
-<p>In this entity:</p>
-<ul>
-  <li><code>apiKey</code> stores the user's API key, which is generated when the user is registered or requests an API key.</li>
-</ul>
-
-<h3>2. Implementing API Key Generation and Validation</h3>
-<p>The <code>AuthService</code> was updated with methods to handle the generation and validation of API keys:</p>
-
-<pre><code>import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UserService } from '../user/user.service';
-import { JwtService } from '@nestjs/jwt';
-import { randomBytes } from 'crypto';
-
-@Injectable()
-export class AuthService {
-  constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
-  ) {}
-
-  async generateAPIKey(userId: string): Promise<string> {
-    const apiKey = randomBytes(32).toString('hex');
-    await this.userService.updateApiKey(userId, apiKey);
-    return apiKey;
-  }
-
-  async validateApiKey(apiKey: string) {
-    const user = await this.userService.findByApiKey(apiKey);
-    if (!user) {
-      throw new UnauthorizedException('Invalid API Key');
-    }
-    return user;
-  }
-
-  // Other methods...
-}
-</code></pre>
-
-<p>These methods allow the application to generate and validate API keys:</p>
-<ul>
-  <li><code>generateAPIKey</code> creates a new API key for the user and stores it in the database.</li>
-  <li><code>validateApiKey</code> checks if the provided API key is valid and returns the associated user.</li>
-</ul>
-
-<h3>3. Creating API Key Authentication Strategy</h3>
-<p>A custom strategy was created to handle API Key authentication using the <code>passport-http-bearer</code> strategy:</p>
-
-<pre><code>import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-http-bearer';
-import { AuthService } from '../auth.service';
-
-@Injectable()
-export class ApiKeyStrategy extends PassportStrategy(Strategy) {
-  constructor(private authService: AuthService) {
-    super();
-  }
-
-  async validate(apiKey: string) {
-    const user = await this.authService.validateApiKey(apiKey);
-    if (!user) {
-      throw new UnauthorizedException('Invalid API Key');
-    }
-    return user;
+<pre><code>{
+  "scripts": {
+    "typeorm": "pnpm run build && npx typeorm -d dist/db/data-source.js",
+    "migration:generate": "pnpm run typeorm -- migration:generate",
+    "migration:run": "pnpm run typeorm -- migration:run",
+    "migration:revert": "pnpm run typeorm -- migration:revert"
   }
 }
 </code></pre>
 
-<p>This strategy validates the API key extracted from the request's <code>Authorization</code> header and ensures the associated user exists.</p>
+<h4>1.3. Running Migrations</h4>
+<p>To generate a new migration, use the following command:</p>
+<pre><code>pnpm run migration:generate -- <em>migration_name</em></code></pre>
 
-<h3>4. Combining JWT and API Key Authentication</h3>
-<p>The application was configured to support both JWT and API key authentication. The <code>CombinedAuthGuard</code> allows for checking both JWT tokens and API keys in the same route:</p>
+<p>This command will create a new migration file in the <code>db/migrations</code> directory. The migration file will contain the SQL queries required to update the database schema.</p>
 
-<pre><code>import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { AuthService } from '../auth.service';
+<p>To apply the migrations, use:</p>
+<pre><code>pnpm run migration:run</code></pre>
+
+<p>To revert the last migration, use:</p>
+<pre><code>pnpm run migration:revert</code></pre>
+
+<h3>2. Seeding</h3>
+
+<h4>2.1. Overview</h4>
+<p>Seeding is the process of populating your database with initial data. This can be useful for setting up initial configurations, testing, or demo purposes.</p>
+
+<h4>2.2. Setting Up Seed Data</h4>
+<p>Your application includes a seeding script located at <code>src/db/seed/seed-data.ts</code>. This script contains the logic to create and insert initial data into the database.</p>
+
+<h4>2.3. Seeding Script</h4>
+<p>The seeding script uses the <code>EntityManager</code> from TypeORM to interact with the database. Below is an example of how users, artists, and playlists are seeded:</p>
+
+<pre><code>import { Artist } from 'src/entities/artist.entity';
+import { User } from 'src/entities/user.entity';
+import { EntityManager } from 'typeorm';
+import { faker } from '@faker-js/faker';
+import { v4 as uuid4 } from 'uuid';
+import * as bcrypt from 'bcryptjs';
+import { Playlist } from 'src/entities/playlist.entity';
+
+export const seedData = async (manager: EntityManager): Promise<void> => {
+  // Seeding logic here
+};
+</code></pre>
+
+<h4>2.4. Running the Seeding Script</h4>
+<p>The seeding script is executed during the application startup. The <code>SeedService</code> is responsible for handling the seeding process.</p>
+
+<p>The <code>SeedService</code> is implemented as follows:</p>
+
+<pre><code>import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { seedData } from '../../db/seed/seed-data';
 
 @Injectable()
-export class CombinedAuthGuard implements CanActivate {
-  constructor(
-    private readonly jwtAuthGuard: JwtAuthGuard,
-    private readonly authService: AuthService,
-  ) {}
+export class SeedService {
+  constructor(private readonly connection: DataSource) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+  async seed(): Promise<void> {
+    const queryRunner = this.connection.createQueryRunner();
 
-    // First, try JWT authentication
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      const jwtAuthResult = await this.jwtAuthGuard.canActivate(context);
-      if (jwtAuthResult) return true;
+      const manager = queryRunner.manager;
+      await seedData(manager);
+
+      await queryRunner.commitTransaction();
     } catch (err) {
-      // If JWT fails, fall back to API key authentication
-      const apiKey = request.headers['x-api-key'];
-      if (apiKey) {
-        const user = await this.authService.validateApiKey(apiKey);
-        if (user) {
-          request.user = user; // Attach the user to the request object
-          return true;
-        }
-      }
+      console.log('Error during database seeding:', err);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
-
-    return false;
   }
 }
 </code></pre>
 
-<h3>5. Updating the Auth Controller</h3>
-<p>The <code>AuthController</code> was updated to handle API key generation and validation:</p>
+<h4>2.5. Integrating Seeding in the Application</h4>
+<p>In your application’s <code>bootstrap</code> function, you can trigger the seeding process:</p>
 
-<pre><code>import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { CombinedAuthGuard } from './guards/combined-auth.guard';
+<pre><code>import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import { SeedService } from './seed/seed.service';
 
-@Controller('auth')
-export class AuthController {
-  constructor(private authService: AuthService) {}
-
-  @Post('generate-api-key')
-  @UseGuards(CombinedAuthGuard)
-  async generateApiKey(@Req() req) {
-    const apiKey = await this.authService.generateAPIKey(req.user.userId);
-    return { apiKey };
-  }
-
-  // Other endpoints...
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('/api/v1');
+  app.useGlobalPipes(new ValidationPipe());
+  const seedService = app.get(SeedService);
+  await seedService.seed();
+  await app.listen(3000);
 }
+bootstrap();
 </code></pre>
 
-<p>This route allows authenticated users to generate an API key, which can be used for subsequent requests.</p>
+<p>This setup ensures that the seeding process is automatically executed when the application starts.</p>
 
-<h3>Next Steps</h3>
-<p>With API Key authentication integrated, the next steps involve refining the security measures, such as implementing rate limiting or IP whitelisting for API key access. Additionally, consider logging and monitoring API key usage to detect and prevent abuse.</p>
+<h3>3. Conclusion</h3>
+<p>With migrations and seeding in place, your database can be easily managed and populated with initial data, ensuring consistency and making the development process smoother.</p>

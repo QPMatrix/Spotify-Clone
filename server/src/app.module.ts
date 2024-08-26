@@ -12,23 +12,20 @@ import { User } from './entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ArtistsModule } from './artists/artists.module';
+import { dataSourceOptions } from '../db/data-source';
+import { PlaylistModule } from './playlist/playlist.module';
+import { SeedModule } from './seed/seed.module';
+import { Playlist } from './entities/playlist.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      database: 'spotify_clone',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'root',
-      entities: [Song, Artist, User],
-      synchronize: true,
-    }),
+    TypeOrmModule.forRoot(dataSourceOptions),
     SongsModule,
     AuthModule,
     UserModule,
     ArtistsModule,
+    PlaylistModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],
