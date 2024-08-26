@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from '../dto/user/create-user.dto';
 import { User } from '../entities/user.entity';
@@ -9,6 +17,7 @@ import { Request } from 'express';
 import { ValidateTokenDto } from '../dto/auth/validate-token.dto';
 import { EnableTwoFactorAuthPayload } from '../types/Payload';
 import { UpdateResult } from 'typeorm';
+import { ApiKeyStrategy } from './strategies/api-key.strategy';
 
 @Controller('auth')
 export class AuthController {
@@ -45,5 +54,15 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   disableTwoFactorAuth(@Req() req: Request): Promise<UpdateResult> {
     return this.authService.disableTwoFactorAuth(req.user.userId);
+  }
+  @Get('generate-api-key')
+  @UseGuards(JwtAuthGuard)
+  generateAPIKey(@Req() req: Request): Promise<{ apiKey: string }> {
+    return this.userService.generateAPIKey(req.user.userId);
+  }
+  @Delete('delete-api-key')
+  @UseGuards(ApiKeyStrategy)
+  deleteAPIKey(@Req() req: Request): Promise<UpdateResult> {
+    return this.userService.deleteAPIKey(req.user.userId);
   }
 }

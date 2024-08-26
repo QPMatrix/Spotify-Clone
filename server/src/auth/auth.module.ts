@@ -5,6 +5,7 @@ import { UserModule } from '../user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ArtistsModule } from '../artists/artists.module';
+import { ApiKeyStrategy } from './strategies/api-key.strategy';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { ArtistsModule } from '../artists/artists.module';
     ArtistsModule,
     JwtModule.register({ secret: 'secret', signOptions: { expiresIn: '1d' } }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, ApiKeyStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })

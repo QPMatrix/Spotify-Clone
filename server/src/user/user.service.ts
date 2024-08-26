@@ -4,6 +4,8 @@ import { User } from '../entities/user.entity';
 import { Repository, UpdateResult } from 'typeorm';
 import { CreateUserDto } from '../dto/user/create-user.dto';
 import * as bcrypt from 'bcryptjs';
+import { v4 as uuid4 } from 'uuid';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -46,5 +48,19 @@ export class UserService {
 
   async findById(id: string): Promise<User> {
     return this.userRepository.findOneBy({ id });
+  }
+
+  async generateAPIKey(id: string): Promise<{ apiKey: string }> {
+    const key = uuid4();
+    await this.userRepository.update(id, { apiKey: key });
+    return { apiKey: key };
+  }
+
+  deleteAPIKey(id: string): Promise<UpdateResult> {
+    return this.userRepository.update(id, { apiKey: null });
+  }
+
+  findByApiKey(apiKey: string) {
+    return this.userRepository.findOneBy({ apiKey });
   }
 }

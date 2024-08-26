@@ -18,4 +18,6 @@ export class User {
   twoFactorAuthSecret: string;
   @Column({ default: false, type: 'boolean' })
   enabledTwoFactorAuth: boolean;
+  @Column({ nullable: true })
+  apiKey: string;
 }

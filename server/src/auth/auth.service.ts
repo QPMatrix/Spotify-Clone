@@ -26,7 +26,7 @@ export class AuthService {
     );
     if (isMatchedPassword) {
       delete user.password;
-      const payload: PayloadType = { email: user.email, userId: user.id };
+      const payload: PayloadType = { userId: user.id, email: user.email };
       const isArtist = await this.artistService.findArtistById(user.id);
       if (isArtist) {
         payload.artistId = isArtist.id;
@@ -39,19 +39,24 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
   }
-  async enableTwoFactorAuth(
-    userId: string,
-  ): Promise<EnableTwoFactorAuthPayload> {
+  async enableTwoFactorAuth(userId: string): Promise<any> {
     const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
     if (user.enabledTwoFactorAuth) {
       return { secret: user.twoFactorAuthSecret };
     }
-    user.twoFactorAuthSecret = speakEasy.generateSecret().base32;
+    const secret = speakEasy.generateSecret();
+    user.twoFactorAuthSecret = secret.base32;
 
     await this.userService.updateTwoFactorAuthSecret(
       user.id,
       user.twoFactorAuthSecret,
     );
+
     return { secret: user.twoFactorAuthSecret };
   }
 
@@ -73,5 +78,13 @@ export class AuthService {
   }
   async disableTwoFactorAuth(userId: string) {
     return this.userService.disableTwoFactorAuthSecret(userId);
+  }
+
+  async generateAPIKey(userId: string) {
+    return this.userService.generateAPIKey(userId);
+  }
+
+  async validateApiKey(apiKey: string) {
+    return this.userService.findByApiKey(apiKey);
   }
 }

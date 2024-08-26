@@ -1,6 +1,6 @@
 export interface PayloadType {
-  email: string;
   userId: string;
+  email: string;
   artistId?: string;
 }
 export type EnableTwoFactorAuthPayload = {
