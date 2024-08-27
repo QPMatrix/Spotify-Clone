@@ -1,96 +1,65 @@
-<h1>📄 Setting Up Swagger in NestJS</h1>
+# Spotify Clone API - Development Branches
 
-<h3>1. Overview</h3>
-<p>Swagger provides an easy way to document and test your API endpoints. In NestJS, integrating Swagger is straightforward and can greatly enhance the development process by providing a user-friendly interface to interact with your API.</p>
+This document provides an overview of all the development branches for the Spotify Clone API project, ordered from the longest ago updated to the most recent.
 
-<h3>2. Installing Necessary Packages</h3>
-<p>To add Swagger to your NestJS project, you need to install the Swagger module:</p>
+## Branches Overview
 
-<pre><code>pnpm add @nestjs/swagger swagger-ui-express</code></pre>
+### 1. [feature-backend/init-validation](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-validation)
+- **Updated:** 3 days ago
+- **Description:** Initial implementation of validation logic across the backend.
 
-<h3>3. Configuring Swagger</h3>
+### 2. [feature-backend/init-songs-module](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-songs-module)
+- **Updated:** 3 days ago
+- **Description:** Initial setup for the songs module in the backend.
 
-<h4>3.1. Setting Up Swagger in <code>main.ts</code></h4>
-<p>In your <code>main.ts</code> file, configure Swagger by adding the following code:</p>
+### 3. [feature-backend/init-logger-middleware](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-logger-middleware)
+- **Updated:** 3 days ago
+- **Description:** Initial setup and integration of custom logger middleware.
 
-<pre><code>import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
+### 4. [learing-backend/scopes](https://github.com/QPMatrix/Spotify-Clone/tree/learing-backend/scopes)
+- **Updated:** 3 days ago
+- **Description:** Learning and implementing scopes within the backend.
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+### 5. [feature-backend/typeorm](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm)
+- **Updated:** 3 days ago
+- **Description:** General TypeORM setup and configuration.
 
-  const config = new DocumentBuilder()
-    .setTitle('Spotify Clone API')
-    .setDescription('API documentation for the Spotify Clone application')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+### 6. [feature-backend/typeorm-paginate](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm-paginate)
+- **Updated:** 2 days ago
+- **Description:** Adds pagination functionality to the API endpoints using TypeORM.
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+### 7. [feature-backend/typeorm-relations](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm-relations)
+- **Updated:** 2 days ago
+- **Description:** This branch focuses on establishing and managing relationships between entities using TypeORM.
 
-  await app.listen(3000);
-}
+### 8. [feature-backend/auth](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth)
+- **Updated:** 2 days ago
+- **Description:** General authentication module, including JWT and user authentication.
 
-bootstrap();
-</code></pre>
+### 9. [feature-backend/auth-2fa](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth-2fa)
+- **Updated:** 2 days ago
+- **Description:** Implementation of two-factor authentication (2FA).
 
-<p>This setup initializes Swagger with a basic configuration, including a title, description, version, and bearer authentication. The Swagger UI will be accessible at <code>http://localhost:3000/api/docs</code>.</p>
+### 10. [feature-backend/auth-api-key](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth-api-key)
+- **Updated:** 2 days ago
+- **Description:** Development of API key authentication within the backend.
 
-<h4>3.2. Decorating Controllers and Methods</h4>
-<p>To document your API endpoints, you can use Swagger decorators in your controllers and methods. Below is an example of how to apply these decorators to a controller:</p>
+### 11. [feature-backend/db-migrations-seeds](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/db-migrations-seeds)
+- **Updated:** 2 days ago
+- **Description:** Contains all database migration and seeding logic.
 
-<pre><code>import { Controller, Get, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateUserDto } from './dto/create-user.dto';
+### 12. [feature-backend/init-playlist](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-playlist)
+- **Updated:** 2 days ago
+- **Description:** Initialization and setup for the playlist module.
 
-@Controller('auth')
-@ApiTags('auth')
-export class AuthController {
-  @Post('signup')
-  @ApiOperation({ summary: 'Create a new user' })
-  @ApiResponse({ status: 201, description: 'The user has been successfully created.' })
-  @ApiResponse({ status: 400, description: 'Invalid input.' })
-  create(@Body() createUserDto: CreateUserDto) {
-    return 'User created';
-  }
+### 13. [feature-backend/configuration](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/configuration)
+- **Updated:** 42 minutes ago
+- **Description:** This branch handles the environment configuration and application settings.
 
-  @Get('profile')
-  @ApiOperation({ summary: 'Get user profile' })
-  @ApiResponse({ status: 200, description: 'Return user profile.' })
-  @ApiResponse({ status: 404, description: 'User not found.' })
-  getProfile() {
-    return 'User profile';
-  }
-}
-</code></pre>
+### 14. [feature-backend/swagger](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/swagger)
+- **Updated:** 1 minute ago
+- **Description:** This branch focuses on the integration of Swagger for API documentation.
 
-<p>The <code>@ApiTags</code> decorator is used to group endpoints under a specific tag in the Swagger UI. The <code>@ApiOperation</code> and <code>@ApiResponse</code> decorators provide metadata about each endpoint, such as its purpose and possible responses.</p>
+## Conclusion
 
-<h3>4. Enhancing Swagger Documentation</h3>
-
-<h4>4.1. Documenting DTOs</h4>
-<p>You can also document your Data Transfer Objects (DTOs) using Swagger decorators. For example:</p>
-
-<pre><code>import { ApiProperty } from '@nestjs/swagger';
-
-export class CreateUserDto {
-  @ApiProperty({ example: 'john.doe@example.com', description: 'The email of the user' })
-  email: string;
-
-  @ApiProperty({ example: 'John', description: 'The first name of the user' })
-  firstName: string;
-
-  @ApiProperty({ example: 'Doe', description: 'The last name of the user' })
-  lastName: string;
-
-  @ApiProperty({ example: 'password123', description: 'The password of the user' })
-  password: string;
-}
-</code></pre>
-
-<p>The <code>@ApiProperty</code> decorator adds metadata to the DTO properties, which will be displayed in the Swagger UI.</p>
-
-<h3>5. Conclusion</h3>
-<p>Integrating Swagger into your NestJS application provides a powerful way to document and interact with your API. By following this setup, you can ensure that your API is well-documented and easy to use for both development and production environments.</p>
+This list provides a chronological overview of all active development branches for the Spotify Clone API project. Each branch link takes you directly to the respective branch on GitHub for further details.
