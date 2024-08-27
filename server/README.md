@@ -1,65 +1,62 @@
-# Spotify Clone API - Development Branches
+# Spotify Clone API - Development Roadmap
 
-This document provides an overview of all the development branches for the Spotify Clone API project, ordered from the longest ago updated to the most recent.
+**Author:** Hasan Diab  
+**Email:** [hasan@qpmatrix.tech](mailto:hasan@qpmatrix.tech)  
+**Website:** [qpmatrix.tech](https://qpmatrix.tech)
 
-## Branches Overview
+## 🚀 Project Overview
 
-### 1. [feature-backend/init-validation](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-validation)
-- **Updated:** 3 days ago
-- **Description:** Initial implementation of validation logic across the backend.
+Welcome to the official repository of the Spotify Clone API. This project is built as a RESTful API using MySQL as the database. The development journey is divided into multiple branches, each focusing on a specific feature or enhancement. Below is a comprehensive list of all development branches, providing a roadmap of the work done so far.
 
-### 2. [feature-backend/init-songs-module](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-songs-module)
-- **Updated:** 3 days ago
-- **Description:** Initial setup for the songs module in the backend.
+## 🌟 Key Development Branches
 
-### 3. [feature-backend/init-logger-middleware](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-logger-middleware)
-- **Updated:** 3 days ago
-- **Description:** Initial setup and integration of custom logger middleware.
+- **[Feature: Initialize Validation](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-validation)**
+    - Purpose: Set up input validation for API endpoints.
 
-### 4. [learing-backend/scopes](https://github.com/QPMatrix/Spotify-Clone/tree/learing-backend/scopes)
-- **Updated:** 3 days ago
-- **Description:** Learning and implementing scopes within the backend.
+- **[Feature: Initialize Songs Module](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-songs-module)**
+    - Purpose: Created the songs module with initial setup.
 
-### 5. [feature-backend/typeorm](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm)
-- **Updated:** 3 days ago
-- **Description:** General TypeORM setup and configuration.
+- **[Feature: Initialize Logger Middleware](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-logger-middleware)**
+    - Purpose: Added custom logger middleware for request logging.
 
-### 6. [feature-backend/typeorm-paginate](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm-paginate)
-- **Updated:** 2 days ago
-- **Description:** Adds pagination functionality to the API endpoints using TypeORM.
+- **[Learning: Scopes and Middleware](https://github.com/QPMatrix/Spotify-Clone/tree/learing-backend/scopes)**
+    - Purpose: Learning how to implement scopes and middleware in NestJS.
 
-### 7. [feature-backend/typeorm-relations](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm-relations)
-- **Updated:** 2 days ago
-- **Description:** This branch focuses on establishing and managing relationships between entities using TypeORM.
+- **[Feature: TypeORM Setup](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm)**
+    - Purpose: Initial setup and configuration of TypeORM.
 
-### 8. [feature-backend/auth](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth)
-- **Updated:** 2 days ago
-- **Description:** General authentication module, including JWT and user authentication.
+- **[Feature: Pagination with TypeORM](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm-paginate)**
+    - Purpose: Implemented pagination in the API endpoints.
 
-### 9. [feature-backend/auth-2fa](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth-2fa)
-- **Updated:** 2 days ago
-- **Description:** Implementation of two-factor authentication (2FA).
+- **[Feature: TypeORM Relations](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/typeorm-relations)**
+    - Purpose: Set up relationships between entities using TypeORM.
 
-### 10. [feature-backend/auth-api-key](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth-api-key)
-- **Updated:** 2 days ago
-- **Description:** Development of API key authentication within the backend.
+- **[Feature: User Authentication](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth)**
+    - Purpose: Developed user authentication with JWT.
 
-### 11. [feature-backend/db-migrations-seeds](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/db-migrations-seeds)
-- **Updated:** 2 days ago
-- **Description:** Contains all database migration and seeding logic.
+- **[Feature: Two-Factor Authentication (2FA)](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth-2fa)**
+    - Purpose: Implemented two-factor authentication for enhanced security.
 
-### 12. [feature-backend/init-playlist](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-playlist)
-- **Updated:** 2 days ago
-- **Description:** Initialization and setup for the playlist module.
+- **[Feature: API Key Authentication](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/auth-api-key)**
+    - Purpose: Integrated API key-based authentication.
 
-### 13. [feature-backend/configuration](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/configuration)
-- **Updated:** 42 minutes ago
-- **Description:** This branch handles the environment configuration and application settings.
+- **[Feature: Database Migrations and Seeds](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/db-migrations-seeds)**
+    - Purpose: Added migrations and seed data setup for the database.
 
-### 14. [feature-backend/swagger](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/swagger)
-- **Updated:** 1 minute ago
-- **Description:** This branch focuses on the integration of Swagger for API documentation.
+- **[Feature: Initialize Playlist Module](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/init-playlist)**
+    - Purpose: Initialized playlist module with CRUD operations.
 
-## Conclusion
+- **[Feature: Configuration Setup](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/configuration)**
+    - Purpose: Set up environment configurations and variable validation.
 
-This list provides a chronological overview of all active development branches for the Spotify Clone API project. Each branch link takes you directly to the respective branch on GitHub for further details.
+- **[Feature: Swagger Documentation](https://github.com/QPMatrix/Spotify-Clone/tree/feature-backend/swagger)**
+    - Purpose: Implemented Swagger for API documentation.
+
+## 👨‍💻 Author Information
+
+This project is developed and maintained by Hasan Diab. If you have any questions or need further information, feel free to contact me:
+
+- **Email:** [hasan@qpmatrix.tech](mailto:hasan@qpmatrix.tech)
+- **Website:** [qpmatrix.tech](https://qpmatrix.tech)
+
+Explore the development journey of the Spotify Clone API by checking out the branches above. Each branch provides a detailed implementation of a specific feature or enhancement, ensuring a modular and organized codebase.
