@@ -1,114 +1,96 @@
-<h1>📄 Environment Configuration Setup</h1>
+<h1>📄 Setting Up Swagger in NestJS</h1>
 
 <h3>1. Overview</h3>
-<p>Environment configuration is crucial for managing different settings for development, testing, and production environments. NestJS provides powerful tools to load and validate environment variables, ensuring your application is configured correctly and securely.</p>
+<p>Swagger provides an easy way to document and test your API endpoints. In NestJS, integrating Swagger is straightforward and can greatly enhance the development process by providing a user-friendly interface to interact with your API.</p>
 
-<h3>2. Setting Up Environment Variables</h3>
+<h3>2. Installing Necessary Packages</h3>
+<p>To add Swagger to your NestJS project, you need to install the Swagger module:</p>
 
-<h4>2.1. Creating the <code>.env</code> File</h4>
-<p>Create a <code>.env</code> file in the root of your project to store your environment variables. This file should not be committed to version control (e.g., Git) for security reasons. Here's an example:</p>
+<pre><code>pnpm add @nestjs/swagger swagger-ui-express</code></pre>
 
-<pre><code># .env
-PORT=
-JWT_SECRET=
-DB_HOST=
-DB_PORT=
-DB_USER=
-DB_PASSWORD=
-DB_DATABASE=
-NODE_ENV=development
+<h3>3. Configuring Swagger</h3>
+
+<h4>3.1. Setting Up Swagger in <code>main.ts</code></h4>
+<p>In your <code>main.ts</code> file, configure Swagger by adding the following code:</p>
+
+<pre><code>import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('Spotify Clone API')
+    .setDescription('API documentation for the Spotify Clone application')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  await app.listen(3000);
+}
+
+bootstrap();
 </code></pre>
 
-<h4>2.2. Installing Necessary Packages</h4>
-<p>To work with environment variables in NestJS, you need to install the following packages:</p>
+<p>This setup initializes Swagger with a basic configuration, including a title, description, version, and bearer authentication. The Swagger UI will be accessible at <code>http://localhost:3000/api/docs</code>.</p>
 
-<pre><code>pnpm add @nestjs/config class-transformer class-validator</code></pre>
+<h4>3.2. Decorating Controllers and Methods</h4>
+<p>To document your API endpoints, you can use Swagger decorators in your controllers and methods. Below is an example of how to apply these decorators to a controller:</p>
 
-<p>These packages provide the functionality to load, parse, and validate environment variables.</p>
+<pre><code>import { Controller, Get, Post, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CreateUserDto } from './dto/create-user.dto';
 
-<h3>3. Configuring the Application</h3>
-
-<h4>3.1. Creating a Configuration Module</h4>
-<p>Create a <code>config</code> directory in your <code>src</code> folder and add a <code>config.ts</code> file to define the configuration structure:</p>
-
-<pre><code>import { IsEnum, IsNumber, IsString, validateSync } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
-
-enum ENV {
-  Development = 'development',
-  Production = 'production',
-  Test = 'test',
-  Provision = 'provision',
-}
-
-class EnvVariables {
-  @IsEnum(ENV)
-  NODE_ENV: ENV;
-
-  @IsNumber()
-  PORT: number;
-
-  @IsString()
-  JWT_SECRET: string;
-
-  @IsString()
-  DB_HOST: string;
-
-  @IsNumber()
-  DB_PORT: number;
-
-  @IsString()
-  DB_USER: string;
-
-  @IsString()
-  DB_PASSWORD: string;
-
-  @IsString()
-  DB_DATABASE: string;
-}
-
-export function validate(config: Record<string, unknown>) {
-  const validatedConfig = plainToInstance(EnvVariables, config, {
-    enableImplicitConversion: true, // This option allows automatic type conversion
-  });
-
-  const errors = validateSync(validatedConfig, {
-    skipMissingProperties: false,
-  });
-
-  if (errors.length > 0) {
-    throw new Error(errors.toString());
+@Controller('auth')
+@ApiTags('auth')
+export class AuthController {
+  @Post('signup')
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiResponse({ status: 201, description: 'The user has been successfully created.' })
+  @ApiResponse({ status: 400, description: 'Invalid input.' })
+  create(@Body() createUserDto: CreateUserDto) {
+    return 'User created';
   }
 
-  return validatedConfig;
+  @Get('profile')
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiResponse({ status: 200, description: 'Return user profile.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  getProfile() {
+    return 'User profile';
+  }
 }
 </code></pre>
 
-<p>This setup will load and validate the environment variables based on the <code>EnvVariables</code> class definition.</p>
+<p>The <code>@ApiTags</code> decorator is used to group endpoints under a specific tag in the Swagger UI. The <code>@ApiOperation</code> and <code>@ApiResponse</code> decorators provide metadata about each endpoint, such as its purpose and possible responses.</p>
 
-<h4>3.2. Integrating Configuration in the <code>AppModule</code></h4>
-<p>In your <code>AppModule</code>, use the <code>ConfigModule</code> to load and validate environment variables:</p>
+<h3>4. Enhancing Swagger Documentation</h3>
 
-<pre><code>import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { validate } from './config/config';
+<h4>4.1. Documenting DTOs</h4>
+<p>You can also document your Data Transfer Objects (DTOs) using Swagger decorators. For example:</p>
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: ['.env'], // Adjust the file path based on your environment
-      validate,
-      isGlobal: true, // Makes ConfigModule available globally
-    }),
-    // Other modules...
-  ],
-  controllers: [],
-  providers: [],
-})
-export class AppModule {}
+<pre><code>import { ApiProperty } from '@nestjs/swagger';
+
+export class CreateUserDto {
+  @ApiProperty({ example: 'john.doe@example.com', description: 'The email of the user' })
+  email: string;
+
+  @ApiProperty({ example: 'John', description: 'The first name of the user' })
+  firstName: string;
+
+  @ApiProperty({ example: 'Doe', description: 'The last name of the user' })
+  lastName: string;
+
+  @ApiProperty({ example: 'password123', description: 'The password of the user' })
+  password: string;
+}
 </code></pre>
 
-<p>This configuration ensures that the environment variables are loaded, validated, and accessible throughout your application.</p>
+<p>The <code>@ApiProperty</code> decorator adds metadata to the DTO properties, which will be displayed in the Swagger UI.</p>
 
-<h3>4. Conclusion</h3>
-<p>By following this setup, you ensure that your application is properly configured and that environment variables are validated, reducing the risk of misconfiguration and enhancing the security of your application.</p>
+<h3>5. Conclusion</h3>
+<p>Integrating Swagger into your NestJS application provides a powerful way to document and interact with your API. By following this setup, you can ensure that your API is well-documented and easy to use for both development and production environments.</p>
