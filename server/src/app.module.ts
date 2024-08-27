@@ -9,13 +9,22 @@ import { DataSource } from 'typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ArtistsModule } from './artists/artists.module';
-import { dataSourceOptions } from '../db/data-source';
 import { PlaylistModule } from './playlist/playlist.module';
 import { SeedModule } from './seed/seed.module';
+import { ConfigModule } from '@nestjs/config';
+import config from './config/config';
+import { typeOrmAsyncConfig } from '../db/data-source';
+import { validate } from './env.validation';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(dataSourceOptions),
+    ConfigModule.forRoot({
+      envFilePath: ['.env.dev', '.env.pro'],
+      isGlobal: true,
+      load: [config],
+      validate: validate,
+    }),
+    TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
     SongsModule,
     AuthModule,
     UserModule,
