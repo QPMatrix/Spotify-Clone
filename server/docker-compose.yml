@@ -24,11 +24,11 @@ services:
   server:
     build:
       context: .
-      dockerfile: ./server/Dockerfile
+      dockerfile: Dockerfile
       target: development
     container_name: spotify_clone_server
     env_file:
-      - ./server/.env.development
+      - .env.development
     volumes:
         - ./server:/app
 networks:
