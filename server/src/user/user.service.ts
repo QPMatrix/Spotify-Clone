@@ -60,7 +60,7 @@ export class UserService {
     return this.userRepository.update(id, { apiKey: null });
   }
 
-  findByApiKey(apiKey: string) {
+  findByApiKey(apiKey: string): Promise<User> {
     return this.userRepository.findOneBy({ apiKey });
   }
 }

@@ -81,7 +81,7 @@ export class AuthController {
     description: 'Unauthorized',
   })
   enableTwoFactorAuth(
-    @Req() req: Request,
+    @Req() req,
   ): Promise<EnableTwoFactorAuthPayload> {
     return this.authService.enableTwoFactorAuth(req.user.userId);
   }
@@ -99,7 +99,7 @@ export class AuthController {
     description: 'Unauthorized',
   })
   validateTwoFactorAuth(
-    @Req() req: Request,
+    @Req() req,
     @Body() data: ValidateTokenDto,
   ): Promise<{ verified: boolean }> {
     return this.authService.validateTwoFactorAuth(req.user.userId, data);
@@ -118,7 +118,7 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized',
   })
-  disableTwoFactorAuth(@Req() req: Request): Promise<UpdateResult> {
+  disableTwoFactorAuth(@Req() req): Promise<UpdateResult> {
     return this.authService.disableTwoFactorAuth(req.user.userId);
   }
 
@@ -134,7 +134,7 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized',
   })
-  generateAPIKey(@Req() req: Request): Promise<{ apiKey: string }> {
+  generateAPIKey(@Req() req): Promise<{ apiKey: string }> {
     return this.userService.generateAPIKey(req.user.userId);
   }
 
@@ -151,7 +151,7 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized',
   })
-  deleteAPIKey(@Req() req: Request): Promise<UpdateResult> {
+  deleteAPIKey(@Req() req): Promise<UpdateResult> {
     return this.userService.deleteAPIKey(req.user.userId);
   }
 }
